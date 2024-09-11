@@ -1,115 +1,103 @@
-import Image from "next/image";
-import localFont from "next/font/local";
+import { useState, useEffect } from 'react';
+import { fetchProducts } from '../utils/api';
+import Link from 'next/link';
+import { Card } from 'flowbite-react';
+import Image from 'next/image';
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
+interface Product {
+  thumbnail: string;
+  id: number;
+  title: string;
+  description: string;
+  price: number;
+  images: string[];
+}
 
-export default function Home() {
+const ITEMS_PER_PAGE = 9;
+
+const ProductListPage = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [category, setCategory] = useState<string>('');
+  const [sort, setSort] = useState<string>('');
+  const [page, setPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      setLoading(true);
+      const data = await fetchProducts(category, sort);
+      setProducts(
+        data.products.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
+      );
+      setTotalPages(Math.ceil(data.products.length / ITEMS_PER_PAGE));
+      setLoading(false);
+    };
+    loadProducts();
+  }, [category, sort, page]);
+
+  if (loading) return <p>Loading...</p>;
+
   return (
-    <div
-      className={`${geistSans.variable} ${geistMono.variable} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
-    >
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/pages/index.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className='container'>
+      <h1>Products</h1>
+      <div>
+        <select onChange={(e) => setCategory(e.target.value)}>
+          <option value=''>All Categories</option>
+          <option value='smartphones'>Smartphones</option>
+          <option value='laptops'>Laptops</option>
+        </select>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <select onChange={(e) => setSort(e.target.value)}>
+          <option value=''>Sort by</option>
+          <option value='asc'>Price Ascending</option>
+          <option value='desc'>Price Descending</option>
+        </select>
+      </div>
+
+      <div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
+        {products.map((product) => (
+          <>
+            <Card
+              className='max-w-sm mx-auto'
+              imgAlt={product.title}
+              renderImage={() => (
+                <Image
+                  loading='lazy'
+                  src={product.thumbnail}
+                  alt={product.title}
+                  width={300}
+                  height={200}
+                />
+              )}>
+              <a href='#'>
+                <h5 className='text-xl font-semibold tracking-tight text-gray-900 dark:text-white'>
+                  {product.title}
+                </h5>
+              </a>
+              <div className='flex items-center justify-between'>
+                <span className='text-3xl font-bold text-gray-900 dark:text-white'>
+                  ${product.price}
+                </span>
+                <Link
+                  href={`/product/${product.id}`}
+                  className='rounded-lg bg-cyan-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-cyan-800 focus:outline-none focus:ring-4 focus:ring-cyan-300 dark:bg-cyan-600 dark:hover:bg-cyan-700 dark:focus:ring-cyan-800'
+                >View Details</Link>
+              </div>
+            </Card>
+          </>
+        ))}
+      </div>
+
+      <div>
+        {Array.from({ length: totalPages }).map((_, idx) => (
+          <button key={idx} onClick={() => setPage(idx + 1)}>
+            {idx + 1}
+          </button>
+        ))}
+      </div>
     </div>
   );
-}
+};
+
+export default ProductListPage;
